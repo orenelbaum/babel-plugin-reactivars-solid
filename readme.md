@@ -46,6 +46,8 @@ Disclaimer: this plugin doesn't have any known bugs at the moment, but is still 
 
 ## Getting Started
 
+See [reactivars-example](https://github.com/orenelbaum/reactivars-example)
+
 ```sh
 npm i -D babel-plugin-reactivars-solid @rollup/plugin-babel
 ```
