@@ -24,7 +24,7 @@ const CounterParent = () => {
 import { createSignal } from 'solid-js'
 
 const CounterChild = props => {
-   <button onClick={() => props.$doubleCount[1]($doubleCount[0]() + 1)}>
+   <button onClick={() => props.$doubleCount[1](props.$doubleCount[0]() + 1)}>
       {props.$doubleCount[0]()} (click to add 2 to count)
    </button>
 
