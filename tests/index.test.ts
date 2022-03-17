@@ -6,7 +6,6 @@ import { parse } from '@babel/parser'
 import main from '../src/index'
 
 
-
 test('index', async () => {
    await test1()
    await test2()
@@ -27,10 +26,12 @@ test('index', async () => {
 	await test17()
 	await test18()
 	await test19()
+	await test20()
 	await test23()
 	await testCounterExample()
 	await testCounterExample2()
 	await testCounterExample3()
+	await randomTest1()
 })
 
 test.run()
@@ -382,10 +383,6 @@ async function test19() {
 <MyComp {...{ $count, $count: $count2 }} $count3={$count} count4={$count} />`
 
 	const expectedOutput =
-	// --<MyComp·{...{
-	// 	--··$count,
-	// 	--··$count:·$count2
-	// 	--}}·$count3={$count}·count4={$count[0]()}·/>;
 /*javascript*/`import { createSignal as _createSignal } from "solid-js";
 
 let $count = _createSignal(0);
@@ -404,61 +401,67 @@ async function test20() {
 	const src =
 /*javascript*/`import { read, write } from 'babel-plugin-reactivars-solid'
 let $count = 0;
-const count = read($count;)
-const setCount = write($count);`
+const count = read($count);
+const setCount = write($count);
+const prop = read(o.$prop);
+const setProp = write(o.$prop);`
 
 	const expectedOutput =
 /*javascript*/`import { createSignal as _createSignal } from "solid-js";
+
 let $count = _createSignal(0);
-const count = $count;
-const setCount = $count;`
+
+const count = $count[0];
+const setCount = $count[1];
+const prop = o.$prop[0];
+const setProp = o.$prop[1];`
 
 	await assertTransform(src, expectedOutput, 'read and write CTFs')
 }
 
 
-// valType CTF
-async function test21() {
-	const src =
-/*javascript*/`import { valType } from 'babel-plugin-reactivars-solid'
-let $v = 0;
-const vWithValType = valType($v);
-const obj = { $p : 1 };
-const pWithValType = valType(obj.$p);`
+// // valType CTF
+// async function test21() {
+// 	const src =
+// /*javascript*/`import { valType } from 'babel-plugin-reactivars-solid'
+// let $v = 0;
+// const vWithValType = valType($v);
+// const obj = { $p : 1 };
+// const pWithValType = valType(obj.$p);`
 
-	const expectedOutput =
-/*javascript*/`import { createSignal as _createSignal } from "solid-js";
-let $v = _createSignal(0);
-const vWithValType = $v;
-const obj = {
-	  $p: _createSignal(1)
-};
-const pWithValType = obj.$p;`
+// 	const expectedOutput =
+// /*javascript*/`import { createSignal as _createSignal } from "solid-js";
+// let $v = _createSignal(0);
+// const vWithValType = $v;
+// const obj = {
+// 	  $p: _createSignal(1)
+// };
+// const pWithValType = obj.$p;`
 
-	await assertTransform(src, expectedOutput, 'valType CTF')
-}
+// 	await assertTransform(src, expectedOutput, 'valType CTF')
+// }
 
 
-// factoryType CTF for functions
-async function test22() {
-	const src =
-/*javascript*/`import { factoryType } from 'babel-plugin-reactivars-solid'
-const getV = () => {
-	let $v = 0;
-	return $$($v);
-}
-const getV$ = factoryType(getV);`
+// // factoryType CTF for functions
+// async function test22() {
+// 	const src =
+// /*javascript*/`import { factoryType } from 'babel-plugin-reactivars-solid'
+// const getV = () => {
+// 	let $v = 0;
+// 	return $$($v);
+// }
+// const getV$ = factoryType(getV);`
 
-	const expectedOutput =
-/*javascript*/`import { createSignal as _createSignal } from "solid-js";
-const getV = () => {
-	let $v = _createSignal(0);
-	return $v;
-}
-const getV$ = getV;`
+// 	const expectedOutput =
+// /*javascript*/`import { createSignal as _createSignal } from "solid-js";
+// const getV = () => {
+// 	let $v = _createSignal(0);
+// 	return $v;
+// }
+// const getV$ = getV;`
 
-	await assertTransform(src, expectedOutput, 'factoryType CTF for functions')
-}
+// 	await assertTransform(src, expectedOutput, 'factoryType CTF for functions')
+// }
 
 
 // Postfixed functions
@@ -473,6 +476,7 @@ const expectedOutput =
 }
 
 
+// Test a single component counter that updates on interval
 async function testCounterExample() {
 	const src =
 /*javascript*/`import { onCleanup } from "solid-js";
@@ -509,6 +513,7 @@ render(() => <CountingComponent />, document.getElementById("app"));`
 }
 
 
+// Test a single component counter with an increment button
 async function testCounterExample2() {
 	const src =
 /*javascript*/`import { render } from "solid-js/web";
@@ -547,6 +552,7 @@ render(() => <Counter />, document.getElementById("app"));`
 }
 
 
+// Test a single component counter with an increment button + creating a reactive variable from an array
 async function testCounterExample3() {
 	const src =
 /*javascript*/`
@@ -573,5 +579,53 @@ export const Counter = () => {
 	  </button>;
 };`
 
-	await assertTransform(src, expectedOutput, 'Counter example', true)
+	await assertTransform(src, expectedOutput, 'Counter example')
+}
+
+
+// 
+async function randomTest1() {
+	const src =
+`import { $$ } from "babel-plugin-reactivars-solid"
+
+createStyles = (player) => {
+	let $style = undefined
+	createComputed(() => {
+		getSorted();
+		const offset = lastPos.get(player) * 18 - curPos.get(player) * 18,
+			t = setTimeout(() =>
+				$style = { transition: "250ms", transform: null }
+			);
+		$style = {
+			transform: \`translateY(\${offset}px)\`,
+			transition: null
+		};
+		onCleanup(() => clearTimeout(t));
+	});
+	return $$($style)[0];
+};`
+
+	const expectedOutput =
+`import { createSignal as _createSignal } from "solid-js";
+
+createStyles = player => {
+  let $style = _createSignal(undefined);
+
+  createComputed(() => {
+    getSorted();
+    const offset = lastPos.get(player) * 18 - curPos.get(player) * 18,
+          t = setTimeout(() => $style[1]({
+      transition: "250ms",
+      transform: null
+    }));
+    $style[1]({
+      transform: \`translateY(\${offset}px)\`,
+      transition: null
+    });
+    onCleanup(() => clearTimeout(t));
+  });
+  return $style[0];
+};`
+
+	await assertTransform(src, expectedOutput, 'Counter example')
 }

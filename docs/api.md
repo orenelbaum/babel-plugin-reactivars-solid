@@ -2,144 +2,230 @@
 
 ```tsx
 // Creating a reactive variable with a signal
-   let $count = 0
+
+   let $x = 0
+
    // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-   let $count = createSignal(0)
+
+   const $x = createSignal(0)
+
+
 
 // Creating a reactive property with a signal
-   let obj = { $count: 0 }
+
+   const obj = { $x: 0 }
+
    // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-   let obj = { $count: createSignal(0) }
+
+   const obj = { $x: createSignal(0) }
+
 
 
 // Basic usage of reactive variables
-   let $count = 0
-   console.log($count)
-   $count = 1
+
+   let $x = "Hello"
+   console.log($x)
+   $x = "Goodbye"
+
    // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-   let $count = createSignal(0)
-   $count[0]()
-   $count[1](1)
+
+   const $x = createSignal("Hello")
+   $x[0]()
+   $x[1]("Goodbye")
+
 
 
 // Basic usage of reactive properties
-   let obj = { $count: 0 }
-   console.log(obj.$count)
-   obj.$count = 1
+
+   const obj = { $x: "Hello" }
+   console.log(obj.$x)
+   obj.$x = "Goodbye"
+
    // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-   let obj = { $count: createSignal(0) }
-   console.log(obj.$count[0]())
-   obj.$count[1](1)
+
+   const obj = { $x: createSignal("Hello") }
+   console.log(obj.$x[0]())
+   obj.$x[1]("Goodbye")
 
 
-// Forking a reactive variable
-   let $count1 = 0
-   let $count2 = $count1
+
+// Forking a reactive variable / property
+
+   let $x = "Hello"
+   let $y = $x
+
    // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-   let $count1 = createSignal(0)
-   let $count2 = createSignal($count1[0]())
+
+   const $x = createSignal("Hello")
+   const $y = createSignal($x[0]())
+
 
 
 // Forking a reactive property into a reactive variable
-   const obj = { $count: 0 }
-   let $c = obj.$count
+
+   const obj = { $x: "Hello" }
+   let $y = obj.$x
+
    // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-   const obj = { $count: createSignal(0) }
-   let $c = createSignal(obj.$count[0]())
+
+   const obj = { $x: createSignal("Hello") }
+   const $y = createSignal(obj.$x[0]())
+
 
 
 // Creating a reactive variable from a getter-setter pair using the `$` function
+
    import { $ } from 'babel-plugin-reactivars-solid'
-   let $count = $([getCount, setCount])
+
+   const [x, setX] = createSignal(0)
+   let $x = $([x, setX])
+
    // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-   let $count = [getCount, setCount]
+
+   const [x, setX] = createSignal(0)
+   const $x = [x, setX]
+
 
 
 // Creating a reactive property from a getter-setter pair using the `$` function
-   let obj = { $count: $([getCount, setCount]) }
+
+   import { $ } from 'babel-plugin-reactivars-solid'
+
+   const [x, setX] = createSignal(0)
+   const obj = { $x: $([x, setX]) }
+
    // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-   let obj = { $count: [getCount, setCount] }
+
+   const [x, setX] = createSignal(0)
+   const obj = { $count: [x, setX] }
+
 
 
 // Copying a reactive variable using the `$` function
-   let $count1 = 0
-   let $count2 = $($count)
+
+   import { $ } from 'babel-plugin-reactivars-solid'
+
+   let $x = 0
+   let $y = $($x)
+
    // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-   const $count1 = createSignal(0)
-   const $count2 = $count1
+
+   const $x = createSignal(0)
+   const $y = $x
+
 
 
 // Copying a reactive property using the `$` function
-   let obj = { $count1: 0 }
-   obj.$count2 = $(obj.$count1)
+
+   import { $ } from 'babel-plugin-reactivars-solid'
+
+   const obj = { $x: 0 }
+   obj.$y = $(obj.$x)
+
    // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-   let obj = { $count1: createSignal(0) }
-   obj.$count2 = obj.$count1
+
+   const obj = { $x: createSignal(0) }
+   obj.$y = obj.$x
+
 
 
 // Making a reactive variable from a reactive property and vice versa using the `$` function
-   let obj = { $count: 0 }
-   let $c = $(obj.$count)
-   obj.$count2 = $($c)
+
+   import { $ } from 'babel-plugin-reactivars-solid'
+
+   const obj = { $x: 0 }
+   let $y = $(obj.$x)
+   obj.$z = $($y)
+
    // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-   let obj = { $count: createSignal(0) }
-   let $c = obj.$count
-   obj.$count2 = $c
+
+   const obj = { $x: createSignal(0) }
+   const $y = obj.$x
+   obj.$z = $y
 
 
 // Dereferencing a reactive variable using the `$$` function
-   let $count = 0
-   console.log($$($count))
+
+   import { $$ } from 'babel-plugin-reactivars-solid'
+
+   let $x = 0
+   console.log($$($x))
+
    // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-   let $count = createSignal(0)
-   console.log($count)
+
+   const $x = createSignal(0)
+   console.log($x)
+
 
 
 // Dereferencing a reactive property using the `$$` function
-   let obj = { $count: 0 }
-   console.log($$(obj.$count))
+
+   import { $$ } from 'babel-plugin-reactivars-solid'
+
+   const obj = { $x: 0 }
+   console.log($$(obj.$x))
+
    // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-   let obj = { $count: createSignal(0) }
-   console.log(obj.$count)
+
+   const obj = { $x: createSignal(0) }
+   console.log(obj.$x)
 
 
 // Making a reactive property from a reactive variable using an object literal
-   let $count = 0
-   let obj = { $count, $count2: $count }
+
+   let $x = 0
+   const obj = { $x, $y: $x }
+
    // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-   let $count = createSignal(0)
-   let obj = { $count: $count, $count2: $count }
+
+   const $x = createSignal(0)
+   const obj = { $x, $y: $x }
 
 
 // Copying a reactive property using an object literal
-   let obj1 = { $count: 1 }
-   let obj2 = { $count: obj2.$count }
+
+   const obj1 = { $x: 0 }
+   const obj2 = { $x: obj1.$x }
+
    // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-   let obj1 = { $count: createSignal(1) }
-   let obj2 = { $count: obj2.$count }
+   
+   const obj1 = { $x: createSignal(0) }
+   const obj2 = { $x: obj1.$x }
+
 
 
 //  Making a reactive variable from a reactive property using destructuring
-   let obj = { $count: 0 }
-   let { $count, $count: $count2 } = obj
+
+   const obj = { $x: 0 }
+   let { $x, $x: $y } = obj
+
    // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-   let obj = { $count: createSignal(0) }
-   let { $count, $count: $count2 } = obj
+
+   const obj = { $x: createSignal(0) }
+   const { $x, $x: $y } = obj
+
 
 
 // Destructuring a reactive variable from a function parameter
-   function f({ $count }) {
-     console.log($count)
+
+   function f({ $x }) {
+     console.log($x)
    }
+
    // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-   function f({ $count }) {
-     console.log($count[0]())
+
+   function f({ $x }) {
+     console.log($x[0]())
    }
 
 
 // Passing reactive variables as props
-   let $count = 0;
-   <MyComp {...{ $count, $count: $count2 }} $count3={$count} count4={$count} />
+
+   let $a = 0;
+   <MyComp {...{ $a, $a: $b }} $c={$a} d={$a} />
+
    // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-   let $count = createSignal(0)
-   <MyComp {...{ $count, $count: $count2 }} $count3={$count} count4={$count[0]()} />
+
+   const $a = createSignal(0);
+   <MyComp {...{ $a, $b: $a }} $c={$a} d={$a[0]()} />
+ 

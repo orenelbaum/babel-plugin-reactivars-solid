@@ -6,6 +6,8 @@ import {
 import { isDerefFunctionCall } from "./is-deref-function-call"
 import { isRefFunctionCall } from "./is-ref-function-call"
 import { removeWrappingCtf } from "./remove-wrapping-ctf"
+import { isCtfCall } from './is-ctf-call';
+import { Expression } from '@babel/types';
 
 
 /**
@@ -22,7 +24,8 @@ export function memberExpressionVisitor(
       || !property.name.startsWith("$")
    ) return
 
-   // If reference is the value of a prefixed object expression property
+   // If reference is being assigned to a prefixed property on an object expression
+   // (e.g. `({ $a: $b })`)
    if (
       memberExpressionPath.parentPath.type === "ObjectProperty"
       && memberExpressionPath.parentPath.parentPath.type === "ObjectExpression"
@@ -31,12 +34,51 @@ export function memberExpressionVisitor(
    )
       return
 
-   const { res, ctfBinding } = isDerefFunctionCall(memberExpressionPath.parentPath)
-   if (res) {
+   const { res: bindingIsBeingDereffed, ctfBinding } =
+      isDerefFunctionCall(memberExpressionPath.parentPath)
+   if (bindingIsBeingDereffed) {
       removeWrappingCtf(
          memberExpressionPath.parentPath as NodePath<CallExpression>,
          ctfBinding
       )
+      return
+   }
+
+   const { res: bindingIsWrappedInReadCtf, ctfBinding: readCtfBinding } =
+      isCtfCall(memberExpressionPath.parentPath, "read")
+   if (bindingIsWrappedInReadCtf) {
+      const newPath = removeWrappingCtf(
+         memberExpressionPath.parentPath as NodePath<CallExpression>,
+         readCtfBinding
+      )
+
+      const getterMemberExpression = memberExpression(
+         memberExpressionPath.node as Expression,
+         numericLiteral(0),
+         true
+      )
+      
+      newPath.replaceWith(getterMemberExpression)
+      
+      return
+   }
+
+   const { res: bindingIsWrappedInWriteCtf, ctfBinding: writeCtfBinding } =
+      isCtfCall(memberExpressionPath.parentPath, "write")
+   if (bindingIsWrappedInWriteCtf) {
+      const newPath = removeWrappingCtf(
+         memberExpressionPath.parentPath as NodePath<CallExpression>,
+         writeCtfBinding
+      )
+
+      const getterMemberExpression = memberExpression(
+         memberExpressionPath.node as Expression,
+         numericLiteral(1),
+         true
+      )
+
+      newPath.replaceWith(getterMemberExpression)
+      
       return
    }
 
@@ -76,6 +118,9 @@ export function memberExpressionVisitor(
 
    ;(memberExpressionPath.node as any).transformed = true
 
+   // Check if the reactive variable is being copied with the ref function.
+   // If so, the CTF will be removed when processing the copying reactive
+   // variable / property.
    if (
       (memberExpressionPath.node as any).wasWrappedInRefCtf
       || isRefFunctionCall(memberExpressionPath.parentPath).res

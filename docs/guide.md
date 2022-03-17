@@ -27,11 +27,11 @@ Those variables hold getter-setter pairs, and are used differently than normal J
   For example, if we have a reactive variable `$x` and we assign to it like this:
   
   ```js
-  $x = 1
+  $x = "Hello"
 
   // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
 
-  $x[1](1)
+  $x[1]("Hello")
   ```
   
   `$x[1]` is the setter associated with this reactive variable.
@@ -50,7 +50,7 @@ let $x = 0
 
 // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
 
-let $x = createSignal(0)
+const $x = createSignal(0)
 ```
 
 This will create a new signal and assign it to the reactive variable.
@@ -63,7 +63,7 @@ let $x = $([getX, setX])
 
 // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
 
-let $x = [getX, setX]
+const $x = [getX, setX]
 ```
 
 The `$` function can also be used to copy reactive variables:
@@ -74,14 +74,16 @@ let $x2 = $($x1)
 
 // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
 
-let $x2 = $x1
+const $x2 = $x1
 ```
 
-This will create a new reactive variable, `$x2` that is associated with the same getter-setter pair as `$x1`.
+This will create a new reactive variable, `$x2`, that is associated with the same getter-setter pair as `$x1`.
 
 Another way to create reactive variables is with destructuring (which is meant to be the go-to option for passing reactive variables around). We'll get into this feature later.
 
 Two more ways are still a work in progress: importing and exporting reactive variables, and reactive variable factory functions.
+
+Note that the `$` function doesn't support update functions or pending values during batching (which in Solid can be accessed only through a signal update function). It also partly breaks right now the `$$` type as we will see below. This is likely to change soon.
 
 
 ### Reactive properties
@@ -95,15 +97,15 @@ obj.$x // this is a reactive property
 
 ```js
 console.log(obj.$x)
-obj.$x = 1
+obj.$x = "Hello"
 
 //  ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
 
 console.log(obj.$x[0]())
-obj.$x[1](1)
+obj.$x[1]("Hello")
 ```
 
-This plugin assumes that all object properties prefixed with `$` which are being accessed, contain a getter and a setter, even if they were passed from somewhere else. If you're using TS we also assume that the type of the property is `T` instead of `[() => T, (val: T) => void]` (note that we are talking only about the type, the actual value of the property would be the getter-setter pair).
+This plugin assumes that all object properties prefixed with `$` which are being accessed, contain a getter and a setter, even if they were passed from somewhere else. If you're using TS we also assume that the type of the property is `T` instead of `[() => T, (val: T) => void]` (like with reactive variables).
 
 Reactive properties work pretty much the same as reactive variables. We already saw that they can be read from and written to like reactive variables.
 
@@ -133,7 +135,7 @@ We can also use the `$` function to create reactive variables from reactive prop
 import { $ } from 'reactivars/solid'
 let $x = 1
 const obj = { $y: $($x) }
-const $z = $(obj.$y)
+let $z = $(obj.$y)
 
 // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
 
@@ -149,27 +151,53 @@ import { $ } from 'reactivars/solid'
 const obj = {
   $x: $([getX1, setX1])
 }
-obj.$x = 1
+obj.$x = "Hello"
 obj.$x = $([getX2, setX2])
-obj.$x = 2
+obj.$x = "Goodbye"
 
 // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
 
 const obj = {
   $x: [getX1, setX1]
 }
-obj.$x[1](1)
+obj.$x[1]("Hello")
 obj.$x = [getX2, setX2]
-obj.$x[1](2)
+obj.$x[1]("Goodbye")
 ```
 
 
 ## Passing around reactive variables and properties
 
-One way we can pass reactive variables and properties around is by using the `$$` function to get the getter-setter pair instead of calling the getter.
+One way we can pass around reactive variables and properties is by using the `$$` function to get the getter-setter pair instead of calling the getter.
 
 ```js
 import { $, $$ } from 'reactivars/solid'
+
+function getX() {
+  let $x = 1
+  return $$($x)
+}
+
+let $x = $(getX())
+
+// ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
+
+function getX() {
+  const $x = 1
+  return $x
+}
+
+const $x = getX()
+```
+
+The `$$` function returns the getter-setter pair.
+
+Note that at the moment due to `$` not supporting update functions (as described above), the type of `$$` is not exact.
+It always shows that the setter supports update functions. However, if you use the `$$` function on a reactive variable created with the `$` function (as seen in the following example) update functions won't be supported in the resulting setter. Like I said above, this is likely to change soon.
+
+```js
+import { $, $$ } from 'reactivars/solid'
+
 function getDoubleX() {
   let $x = 1
   let $doubleX = $([() => $x * 2, x => $x = x / 2])
@@ -181,17 +209,15 @@ let $doubleX = $(getDoubleX())
 // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
 
 function getDoubleX() {
-  let $x = 1
-  let $doubleX = [() => $x * 2, x => $x = x / 2]
+  const $x = 1
+  const $doubleX = [() => $x * 2, x => $x = x / 2]
   return $doubleX
 }
 
-let $doubleX = getDoubleX()
+const $doubleX = getDoubleX()
 ```
 
-The `$$` function returns the getter-setter pair.
-
-But this is becoming a little bit ugly. That's why this plugin supports another syntax.
+Either way, this is becoming a little bit ugly. That's why this plugin supports another syntax.
 You can use object expressions as a more concise way to create objects containing your reactive variables. This lets you skip the `$` function.
 
 ```js
@@ -208,7 +234,7 @@ This part can be a bit confusing, but it's actually pretty simple. If an object 
 
 So we can use the shorthand syntax like we saw in the example above - `({ $x })`, or we can alternatively do `({ $x: $y })`. What you need to actually remember is that if both of those identifiers are prefixed with `$` (or one identifier in shorthand syntax), then we are copying a reactive variable into a reactive property on this object expression.
 
-Lets see what happens when we omit some of all of the `$` prefixes:
+Lets see what happens when we omit one or both of the `$` prefixes:
 ```js
 ({ $a: $b, $c: d, e: $f, $g, h });
 
@@ -233,7 +259,7 @@ Again, whenever both identifiers are prefixed, or we are using the shorthand des
 
 Both of those features might be a little bit confusing, but they give us a relatively concise and clean way of passing reactive variables around.
 
-Another thing to note about object expressions, is that the value we are assigning to the can be a reactive property itself, instead of a reactive variable.
+Another thing to note about object expressions, is that the value we are assigning to a reactive variable can be a reactive property, instead of another reactive variable.
 This is easier to show than to explain:
 
 ```js
@@ -244,6 +270,7 @@ function getXAndY() {
 let { $x, $y } = getXAndY()
 
 // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
+
 function getXAndY() {
   return { $x: obj.$x, $y: createSignal(obj.y) }
 }

@@ -21,6 +21,8 @@ export function scopeVisitor(programPath: NodePath<Scopable>) {
          || bindingName === "ref"
          || bindingName === "$$"
          || bindingName === "deref"
+         || bindingName === "read"
+         || bindingName === "write"
       ) continue
 
       const binding = scope.bindings[bindingName]

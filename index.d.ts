@@ -1,8 +1,9 @@
+import { Signal } from "solid-js/types/reactive/signal"
 
 export declare const $: <Value>(
-   getterSetterPair: [() => Value, (x: Value) => any]
+   arg: [() => Value, (x: Value) => any] | Value
 ) => Value
 
-export declare const $$: <Value>(
-   getterSetterPair: [Value, () => Value]
-) => [Value, () => Value]
+export declare const $$: <Value>(arg: Value) => Signal<Value>
+
+// export declare const read: <Value>(arg: Value) => () => Value
