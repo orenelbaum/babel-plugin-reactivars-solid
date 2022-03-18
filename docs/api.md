@@ -228,4 +228,19 @@
 
    const $a = createSignal(0);
    <MyComp {...{ $a, $b: $a }} $c={$a} d={$a[0]()} />
+
+
+// Read and write CTF
+
+   import { read, write } from 'babel-plugin-reactivars-solid'
+
+   let $sig = 0
+   const sigGetter = read($sig)
+   const sigSetter = write($sig)
+
+   // ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
+
+   const $sig = createSignal(0)
+   const sigGetter = $sig[0]
+   const sigSetter = $sig[1]
  

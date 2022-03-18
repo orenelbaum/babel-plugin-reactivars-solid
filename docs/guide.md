@@ -301,3 +301,22 @@ const Comp1 = () => {
   </>
 }
 ```
+
+
+## Read and write CTFs
+
+You can use the `read` and `write` compile time functions to get the getter and setter of a reactive variable directly without using the `$` function.
+
+```js
+import { read, write } from 'babel-plugin-reactivars-solid'
+
+let $sig = 0
+const sigGetter = read($sig)
+const sigSetter = write($sig)
+
+// ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
+
+const $sig = createSignal(0)
+const sigGetter = $sig[0]
+const sigSetter = $sig[1]
+```
