@@ -28,6 +28,7 @@ test('index', async () => {
 	await test19()
 	await test20()
 	await test23()
+	await test24()
 	await testCounterExample()
 	await testCounterExample2()
 	await testCounterExample3()
@@ -473,6 +474,17 @@ const expectedOutput =
 /*javascript*/`let $count = localSignal$(0);`
 
 	await assertTransform(src, expectedOutput, 'Postfixed functions')
+}
+
+
+// Unused imports
+async function test24() {
+	const src =
+`import { $, $$ } from "babel-plugin-reactivars-solid"`
+
+	const expectedOutput = ``
+
+	await assertTransform(src, expectedOutput, 'Counter example')
 }
 
 
