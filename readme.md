@@ -30,8 +30,6 @@ const CounterParent = () => {
 }
 ```
 
-Note that this example will look much nicer once I add support for unary and assignment operators (such as `++` and `+=`).
-
 Disclaimer: this plugin doesn't have any known bugs at the moment, but is still not ready for production use. If you find any bugs please open an issue.
 
 
@@ -72,9 +70,7 @@ export default defineConfig({
 
 
 ## Roadmap / Missing Features
-- Unary operators support (`$x++`, etc.) as well as assignment operators such as `$x += 1`
 - Handle batching, update functions and pending values
-- `read` and `write` CTF to get the getter or the setter
 - `$` label for effects
 ### Under consideration
 - Reactive variable factory functions (`let doubleCount = double$($count))
@@ -83,7 +79,6 @@ export default defineConfig({
 
 
 ## Other cool plugins
-- Related project: [babel-plugin-mutable-react-state experimental](https://github.com/barelyhuman/mute)
 - https://github.com/orenelbaum/babel-plugin-solid-undestructure - This plugin lets you destructure your props without losing reactivity (also made by me).
 - https://github.com/LXSMNSYC/babel-plugin-solid-labels - Solid labels is more of an all in one plugin. It has Svelte-like reactive variables (like this plugin), prop destructuring and more.
 - https://github.com/LXSMNSYC/solid-sfc - An experimental SFC compiler for SolidJS.
