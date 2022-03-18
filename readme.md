@@ -79,7 +79,7 @@ export default defineConfig({
 
 
 ## Roadmap / Missing Features
-- Unary operators and support (`$x++`, etc.) as well as assignment operators such as `$x += 1`
+- Unary operators support (`$x++`, etc.) as well as assignment operators such as `$x += 1`
 - Handle batching, update functions and pending values
 - `read` and `write` CTF to get the getter or the setter
 - `$` label for effects
