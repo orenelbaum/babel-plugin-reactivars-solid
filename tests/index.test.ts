@@ -35,6 +35,7 @@ test('index', async () => {
 	await testCounterExample2()
 	await testCounterExample3()
 	await randomTest1()
+	await testReadmeExample()
 })
 
 test.run()
@@ -693,4 +694,71 @@ createStyles = player => {
 };`
 
 	await assertTransform(src, expectedOutput, 'Counter example')
+}
+
+
+// Tests the readme example
+async function testReadmeExample() {
+	const src =
+`import { $ } from 'babel-plugin-reactivars-solid'
+
+const getDouble = ({ $sig }) => 
+	({ $doubled: $([
+		() => $sig * 2,
+		newVal => $sig = newVal / 2
+	])})
+
+const CounterChild = ({ $doubleCount }) =>
+   <button onClick={() => $doubleCount++}>
+      {$doubleCount} (click to add 0.5 to count)
+   </button>
+
+const CounterParent = () => {
+   let $count = 0
+   let { $doubled: $doubleCount } = getDouble({ $sig: $count })
+   const incrementCount = () => $doubleCount += 2
+   return <>
+      <button onClick={incrementCount}>
+         {$count}
+      </button>
+      <CounterChild {...{ $doubleCount }} />
+   </>
+}`
+
+	const expectedOutput = `import { createSignal as _createSignal } from "solid-js";
+
+const getDouble = ({
+  $sig
+}) => ({
+  $doubled: [() => $sig[0]() * 2, newVal => $sig[1](newVal / 2)]
+});
+
+const CounterChild = ({
+  $doubleCount
+}) => <button onClick={() => $doubleCount[1]($doubleCount[0]() + 1) - 1}>
+      {$doubleCount[0]()} (click to add 0.5 to count)
+   </button>;
+
+const CounterParent = () => {
+  let $count = _createSignal(0);
+
+  let {
+    $doubled: $doubleCount
+  } = getDouble({
+    $sig: $count
+  });
+
+  const incrementCount = () => $doubleCount[1]($doubleCount[0]() + 2);
+
+  return <>
+      <button onClick={incrementCount}>
+         {$count[0]()}
+      </button>
+      <CounterChild {...{
+      $doubleCount
+    }} />
+   </>;
+};`
+
+	await assertTransform(src, expectedOutput, 'Counter example', true)
 }
