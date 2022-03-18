@@ -26,9 +26,7 @@ export const removeWrappingCtf = (ctfPath: NodePath<CallExpression>, ctfBinding:
 
    const wrappedExpression = args[0]
 
-	;(wrappedExpression.node as any).wasWrappedInRefCtf = true
+	;(wrappedExpression.node as any).wasWrappedInCtf = true
 
 	return ctfPath.replaceWith(wrappedExpression)[0]
 }
-
-module.exports.removeWrappingCtf = removeWrappingCtf

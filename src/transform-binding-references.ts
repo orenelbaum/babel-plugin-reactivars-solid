@@ -1,12 +1,13 @@
-import { Binding, NodePath } from "@babel/traverse"
+import { Binding, NodePath } from '@babel/traverse'
 import {
-   identifier, numericLiteral, callExpression, memberExpression, CallExpression,
-   ObjectProperty, Identifier, JSXAttribute, JSXIdentifier, Expression
-} from "@babel/types"
-import { isDerefFunctionCall } from "./is-deref-function-call"
-import { isRefFunctionCall } from "./is-ref-function-call"
-import { removeWrappingCtf } from "./remove-wrapping-ctf"
-import { isCtfCall } from './is-ctf-call';
+   numericLiteral, callExpression, memberExpression, CallExpression, ObjectProperty,
+   Identifier, JSXAttribute, JSXIdentifier, Expression
+} from '@babel/types'
+import { isDerefFunctionCall } from './is-deref-function-call'
+import { isRefFunctionCall } from './is-ref-function-call'
+import { removeWrappingCtf } from './remove-wrapping-ctf'
+import { isCtfCall } from './is-ctf-call'
+import { getGetterMemberExpression } from './utils'
 
 
 export function transformBindingReferences(binding: Binding, bindingName: string) {
@@ -16,7 +17,7 @@ export function transformBindingReferences(binding: Binding, bindingName: string
       // If so, the CTF will be removed when processing the copying reactive
       // variable / property.
       if (
-         (refPath.node as any).wasWrappedInRefCtf
+         (refPath.node as any).wasWrappedInCtf
          || isRefFunctionCall(refPath.parentPath).res
       ) continue
 
@@ -90,11 +91,7 @@ export function transformBindingReferences(binding: Binding, bindingName: string
       )
          continue
 
-      const getterMemberExpression = memberExpression(
-         identifier(bindingName),
-         numericLiteral(0),
-         true
-      )
+      const getterMemberExpression = getGetterMemberExpression(bindingName)
 
       refPath.replaceWith(
          callExpression(
