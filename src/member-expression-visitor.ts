@@ -1,6 +1,6 @@
 import { NodePath } from '@babel/traverse'
 import { 
-   callExpression, memberExpression as memberExpression_, numericLiteral, MemberExpression,
+   callExpression, memberExpression, numericLiteral, MemberExpression,
    CallExpression, ObjectProperty, Identifier, binaryExpression, Expression
 } from '@babel/types'
 import { isDerefFunctionCall } from './is-deref-function-call'
@@ -15,28 +15,35 @@ import { isCtfCall } from './is-ctf-call'
 export function memberExpressionVisitor(
    memberExpressionPath: NodePath<MemberExpression>
 ) {
-   const memberExpression = memberExpressionPath.node
-   const property = memberExpression.property
+   const reactivePropMemberExpression = memberExpressionPath.node
+   const reactiveProperty = reactivePropMemberExpression.property
 
    if (
-      (memberExpression as any).transformed
-      || property.type !== 'Identifier'
-      || !property.name.startsWith('$')
+      (reactivePropMemberExpression as any).transformed
+      || reactiveProperty.type !== 'Identifier'
+      || !reactiveProperty.name.startsWith('$')
    ) return
 
+   const getterMemberExpression = memberExpression(
+      reactivePropMemberExpression as Expression,
+      numericLiteral(0),
+      true
+   )
 
    const getterCallExpression = callExpression(
-      memberExpression_(
-         memberExpression,
-         numericLiteral(0),
-         true
-      ),
+      getterMemberExpression,
       []
+   )
+
+   const setterMemberExpression = memberExpression(
+      reactivePropMemberExpression,
+      numericLiteral(1),
+      true
    )
 
 
    // If reference is being assigned to a prefixed property on an object expression
-   // (e.g. `({ $a: $b })`)
+   // (e.g. reference is obj.$b `({ $a: obj.$b })`)
    if (
       memberExpressionPath.parentPath.type === 'ObjectProperty'
       && memberExpressionPath.parentPath.parentPath.type === 'ObjectExpression'
@@ -66,12 +73,6 @@ export function memberExpressionVisitor(
          memberExpressionPath.parentPath as NodePath<CallExpression>,
          readCtfBinding
       )
-
-      const getterMemberExpression = memberExpression_(
-         memberExpression as Expression,
-         numericLiteral(0),
-         true
-      )
       
       newPath.replaceWith(getterMemberExpression)
       
@@ -88,8 +89,8 @@ export function memberExpressionVisitor(
          writeCtfBinding
       )
 
-      const getterMemberExpression = memberExpression_(
-         memberExpression as Expression,
+      const getterMemberExpression = memberExpression(
+         reactivePropMemberExpression as Expression,
          numericLiteral(1),
          true
       )
@@ -103,9 +104,9 @@ export function memberExpressionVisitor(
    // If the member expression is being assigned to
    if (
       memberExpressionPath.parentPath.isAssignmentExpression()
-      && memberExpressionPath.parentPath.node.left === memberExpression
+      && memberExpressionPath.parentPath.node.left === reactivePropMemberExpression
    ) {
-      ;(memberExpression as any).transformed = true
+      ;(reactivePropMemberExpression as any).transformed = true
 
       const operator = memberExpressionPath.parentPath.node.operator
       const operatorNonAssignmentVersion = operator.replace('=', '')
@@ -140,11 +141,7 @@ export function memberExpressionVisitor(
 
       assignmentExpressionPath.replaceWith(
          callExpression(
-            memberExpression_(
-               memberExpression,
-               numericLiteral(1),
-               true
-            ),
+            setterMemberExpression,
             [valueToSet]
          )
       )
@@ -153,16 +150,48 @@ export function memberExpressionVisitor(
    }
 
 
-   ;(memberExpression as any).transformed = true
+   // If the member expression is inside an update expression (e.g. obj.$a++ )
+   if (memberExpressionPath.parentPath.isUpdateExpression()) {
+      const updateExpressionPath = memberExpressionPath.parentPath
+      const postfixOrPrefix = (updateExpressionPath.node as any).prefix ? "prefix" : "postfix"
+      const operator = (updateExpressionPath.node as any).operator as string
+      const binaryOperator = operator[0]
+      const oppositeBinaryOperator = binaryOperator === "-" ? "+" : "-"
+
+      const valueToSet = binaryExpression(
+         binaryOperator as any,
+         getterCallExpression,
+         numericLiteral(1)
+      )
+      
+      const setterCallExpression = callExpression(
+         setterMemberExpression,
+         [valueToSet]
+      )
+
+      updateExpressionPath.replaceWith(
+         postfixOrPrefix === "prefix"
+            ? setterCallExpression
+            : binaryExpression(
+               oppositeBinaryOperator,
+               setterCallExpression,
+               numericLiteral(1)
+            )
+      )
+   }
+
+
+   ;(reactivePropMemberExpression as any).transformed = true
 
 
    // Check if the reactive property is being copied with the ref function.
    // If so, the CTF will be removed when processing the copying reactive
    // variable / property.
    if (
-      (memberExpression as any).wasWrappedInCtf
+      (reactivePropMemberExpression as any).wasWrappedInCtf
       || isRefFunctionCall(memberExpressionPath.parentPath).res
    ) return
+
 
    memberExpressionPath.replaceWith(getterCallExpression)
 }

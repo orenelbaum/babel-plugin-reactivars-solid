@@ -30,6 +30,7 @@ test('index', async () => {
 	await test23()
 	await test24()
 	await test25()
+	await test26()
 	await testCounterExample()
 	await testCounterExample2()
 	await testCounterExample3()
@@ -506,6 +507,39 @@ obj.$count[1](obj.$count[0]() + 1);`
 
 	await assertTransform(src, expectedOutput, 'Assignment operators')
 }
+
+
+// Unary operators
+async function test26() {
+	const src =
+/*javascript*/`let $count = 0;
+$count++;
+++$count;
+$count--;
+--$count;
+obj.$count++;
+++obj.$count;
+obj.$count--;
+--obj.$count;`
+
+	const expectedOutput =
+/*javascript*/`import { createSignal as _createSignal } from "solid-js";
+
+let $count = _createSignal(0);
+
+$count[1]($count[0]() + 1) - 1;
+$count[1]($count[0]() + 1);
+$count[1]($count[0]() - 1) + 1;
+$count[1]($count[0]() - 1);
+obj.$count[1](obj.$count[0]() + 1) - 1;
+obj.$count[1](obj.$count[0]() + 1);
+obj.$count[1](obj.$count[0]() - 1) + 1;
+obj.$count[1](obj.$count[0]() - 1);`
+
+	await assertTransform(src, expectedOutput, 'Unary operators')
+}
+
+
 
 // Test a single component counter that updates on interval
 async function testCounterExample() {
