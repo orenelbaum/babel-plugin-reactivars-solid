@@ -4,37 +4,28 @@
 
 
 ```jsx
-const CounterChild = props =>
-   <button onClick={() => props.$doubleCount = props.$doubleCount + 1}>
-      {props.$doubleCount} (click to add 2 to count)
+import { $ } from 'babel-plugin-reactivars-solid'
+
+const getDouble = ({ $sig }) => 
+	({ $doubled: $([
+		() => $sig * 2,
+		newVal => $sig = newVal / 2
+	])})
+
+const CounterChild = ({ $doubleCount }) =>
+   <button onClick={() => $doubleCount++}>
+      {$doubleCount} (click to add 0.5 to count)
    </button>
 
 const CounterParent = () => {
    let $count = 0
-   let { $doubleCount } = getDouble({ $count })
-   const incrementCount = () => $doubleCount += $doubleCount + 0.5
+   let { $doubled: $doubleCount } = getDouble({ $sig: $count })
+   const incrementCount = () => $doubleCount += 2
    return <>
-     {$count}
-     <CounterChild {...{ $doubleCount }} />
-   </>
-}
-
-//  ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
-
-import { createSignal } from 'solid-js'
-
-const CounterChild = props => {
-   <button onClick={() => props.$doubleCount[1](props.$doubleCount[0]() + 1)}>
-      {props.$doubleCount[0]()} (click to add 2 to count)
-   </button>
-
-const CounterParent = () => {
-   const $count = createSignal(0)
-   const { $doubleCount } = getDouble({ $count })
-   const incrementCount = () => $doubleCount[1]($doubleCount[0]() + 0.5)
-   return <>
-     {$count[0]()}
-     <CounterChild {...{ $doubleCount }} />
+      <button onClick={incrementCount}>
+         {$count}
+      </button>
+      <CounterChild {...{ $doubleCount }} />
    </>
 }
 ```
