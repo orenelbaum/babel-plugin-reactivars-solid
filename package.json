@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-reactivars-solid",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A babel plugin that lets you use a Svelte-like syntax with SolidJS",
   "main": "dist/index",
   "types": "index.d.ts",
